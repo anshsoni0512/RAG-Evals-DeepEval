@@ -1,4 +1,4 @@
-# RAG Evals
+# RAG Evals with DeepEval framework
 
 A from-scratch **evaluation suite for a Retrieval-Augmented Generation (RAG) pipeline**, built to
 measure retrieval quality, reranking quality, generation quality, and end-to-end pipeline quality.

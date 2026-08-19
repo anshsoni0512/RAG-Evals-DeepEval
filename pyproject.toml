@@ -15,4 +15,5 @@ dependencies = [
     "langchain-text-splitters>=1.1.2",
     "pytest>=9.1.1",
     "python-dotenv>=1.2.3",
+    "sentence-transformers>=6.0.0",
 ]

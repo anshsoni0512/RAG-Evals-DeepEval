@@ -58,35 +58,5 @@
     "query": "what exactly does recall at k tell me about my retriever?",
     "ideal_answer": "Recall@k tells you, out of all the correct relevant documents that exist for a query, how many the retriever actually retrieved in its top-k results. For example, if there are two correct documents for a question and the retriever fetches only one of them, the recall is 1 out of 2, or 50%. Recall is always between 0 and 100%, and ideally should be 100%. To get the overall recall@k on your dataset, you compute recall per question and then average across all questions. This tells you how successful your retriever is at fetching the relevant documents.",
     "source": "Session 3"
-  },
-  {
-    "id": "g011",
-    "query": "What is the RAG triad?",
-    "ideal_answer": "The RAG triad is a set of three metrics used to evaluate a RAG pipeline, based on the three things present after a query runs: the question, the retrieved context, and the generated answer. Context relevance checks whether the retrieved context is relevant to the question, faithfulness checks whether the answer is grounded in the retrieved context, and answer relevance checks whether the answer actually addresses the question.",
-    "source": "Session 9"
-  },
-  {
-    "id": "g012",
-    "query": "What is regression testing in LLM evaluation?",
-    "ideal_answer": "Regression testing is the act of running your full eval suite on a new version of the application to check whether it is objectively better or worse than the previous version. You run the suite, get a report of every metric, and compare it against a baseline to decide whether the new version should be deployed.",
-    "source": "Session 9"
-  },
-  {
-    "id": "g013",
-    "query": "Why does this course use DeepEval instead of RAGAS?",
-    "ideal_answer": "The course uses DeepEval for two reasons: RAGAS was already covered in the advanced RAG course, and DeepEval has a broader scope that supports agents, multi-turn chatbots, and non-LLM applications. DeepEval is also built on top of pytest, the standard Python testing library, which makes it familiar to anyone who has done software testing.",
-    "source": "Session 9"
-  },
-  {
-    "id": "g014",
-    "query": "What is an eval suite?",
-    "ideal_answer": "An eval suite is the combined set of all the evaluation tests written across the component, pipeline, and application levels. Instead of running a single test, you run the whole suite together to check the application from every angle before deciding whether to deploy.",
-    "source": "Session 9"
-  },
-  {
-    "id": "g015",
-    "query": "Which metrics are used to evaluate the retriever?",
-    "ideal_answer": "The retriever is evaluated using recall and precision. Recall measures how many of the relevant documents the retriever managed to fetch, and precision measures how many of the fetched documents were actually relevant.",
-    "source": "Session 9"
   }
 ]

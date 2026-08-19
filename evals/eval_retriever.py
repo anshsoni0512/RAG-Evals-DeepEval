@@ -3,11 +3,9 @@ import os
 import sys
 from pathlib import Path
 
-# make sure the project root (and therefore `src`) is importable regardless
-# of whether this script is run directly or as a module
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 from dotenv import load_dotenv
+
+from langchain_groq import ChatGroq
 
 from deepeval.test_case import LLMTestCase
 from deepeval.metrics import ContextualPrecisionMetric, ContextualRecallMetric
@@ -24,10 +22,10 @@ THRESHOLD = 0.7
 
 # deepeval has no built-in Groq wrapper, but Groq exposes an OpenAI-compatible
 # endpoint, so we point the generic LocalModel at it using GROQ_API_KEY.
-JUDGE_MODEL = LocalModel(
-    model="openai/gpt-oss-120b",
-    api_key=os.environ["GROQ_API_KEY"],
-    base_url="https://api.groq.com/openai/v1",
+JUDGE_MODEL = ChatGroq(
+    model="llama-3.1-8b-instant",
+    groq_api_key=os.getenv('GROQ_API_KEY'),
+    temperature=0
 )
 
 # first load the golden dataset

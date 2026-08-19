@@ -2,14 +2,14 @@ import os
 import json
 
 from deepeval.test_case import LLMTestCase
-from deepeval.metrics import FaithfulnessMetric, AnswerRelevancyMetric
+from deepeval.metrics import FaithfulnessMetric, AnswerRelevancyMetric, ContextualRelevancyMetric
 from deepeval.models import LocalModel
 from deepeval import evaluate
 from deepeval.evaluate.configs import CacheConfig
 
 from dotenv import load_dotenv
 
-from src.generator import generate
+from src.pipeline import rag
 
 load_dotenv()
 
@@ -28,14 +28,16 @@ with open(path) as f:
 
 test_cases = []
 
-for i in data:
-    test_cases.append(LLMTestCase(
-            input=i['query'],
-            retrieval_context=i['ideal_context'],
-            actual_output=generate(i['query'], i['ideal_context'])
-        ))
+for k in data:
+    result = rag.invoking(k['query'])  # rag.invoking gives three values
 
-metrics = [FaithfulnessMetric(model=JUDGE_MODEL, threshold=0.7), AnswerRelevancyMetric(model=JUDGE_MODEL, threshold=0.7)]
+    test_cases.append(LLMTestCase(
+            input=k['query'],
+            retrieval_context=result['context'],
+            actual_output=result['answer']
+        ))
+  
+metrics = [FaithfulnessMetric(model=JUDGE_MODEL, threshold=0.7), AnswerRelevancyMetric(model=JUDGE_MODEL, threshold=0.7),ContextualRelevancyMetric(model=JUDGE_MODEL, threshold=0.7)]
 
 evaluate(
     test_cases=test_cases,

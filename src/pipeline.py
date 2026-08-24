@@ -19,8 +19,9 @@ class Pipeline:
             'answer':answer
         }
 
+rag = Pipeline()
+
 if __name__== '__main__':
-    rag = Pipeline()
     result = rag.invoking('What is Online Eval')
     print(result)
     

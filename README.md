@@ -51,12 +51,13 @@ Every stage above has a matching eval script under `evals/`, each scored by an L
 (`openai/gpt-oss-120b`, served through Groq's OpenAI-compatible endpoint and wrapped with
 DeepEval's `LocalModel`) against a hand-written golden dataset.
 
-| Script                     | Component tested                        | Metrics                                                                   | Golden data                          |
-|-----------------------------|------------------------------------------|-----------------------------------------------------------------------------|-----------------------------------------|
-| `evals/eval_retriever.py`   | Dense retriever                          | `ContextualPrecisionMetric`, `ContextualRecallMetric`                       | `goldendata/golden_retriever.json`     |
-| `evals/eval_reranker.py`    | Cross-encoder reranker                   | `ContextualPrecisionMetric`, `ContextualRecallMetric`                       | `goldendata/golden_retriever.json`     |
-| `evals/eval_generator.py`   | Answer generation                        | `FaithfulnessMetric`, `AnswerRelevancyMetric`                               | `goldendata/faithfulness_data.json`    |
-| `evals/eval_pipeline.py`    | Full retrieve, rerank, generate pipeline | `FaithfulnessMetric`, `AnswerRelevancyMetric`, `ContextualRelevancyMetric`  | `goldendata/faithfulness_data.json`    |
+| Script                       | Component tested                          | Metrics                                                                     | Golden data                            |
+|-------------------------------|--------------------------------------------|-------------------------------------------------------------------------------|-------------------------------------------|
+| `evals/eval_retriever.py`    | Dense retriever                            | `ContextualPrecisionMetric`, `ContextualRecallMetric`                        | `goldendata/golden_retriever.json`      |
+| `evals/eval_reranker.py`     | Cross-encoder reranker                     | `ContextualPrecisionMetric`, `ContextualRecallMetric`                        | `goldendata/golden_retriever.json`      |
+| `evals/eval_generator.py`    | Answer generation                          | `FaithfulnessMetric`, `AnswerRelevancyMetric`                                | `goldendata/faithfulness_data.json`     |
+| `evals/eval_pipeline.py`     | Full retrieve, rerank, generate pipeline   | `FaithfulnessMetric`, `AnswerRelevancyMetric`, `ContextualRelevancyMetric`   | `goldendata/faithfulness_data.json`     |
+| `evals/eval_application.py`  | Full pipeline, judged against an ideal answer (reference-based, application-level quality) | `GEval` — custom `Correctness`, `Completeness`, `Style` rubrics | `goldendata/correctness_data.json`      |
 
 **What each metric actually checks:**
 
@@ -69,6 +70,14 @@ DeepEval's `LocalModel`) against a hand-written golden dataset.
 - **Faithfulness**: does the generated answer only claim things supported by the retrieved
   context (no hallucination)?
 - **Answer Relevancy**: does the generated answer actually address the question that was asked?
+- **Correctness (G-Eval)**: do the answer's factual claims avoid contradicting the golden
+  `ideal_answer`? Judges truth only — brevity, omissions, and extra correct detail are never
+  penalized.
+- **Completeness (G-Eval)**: how many of the key points in the golden `ideal_answer` does the
+  answer actually cover? Judges coverage only, independent of whether those points are phrased
+  correctly.
+- **Style (G-Eval)**: does the answer read in an intuitive, conversational "explain it out loud"
+  teaching voice rather than a dry, bureaucratic, or bare-bullet-list tone?
 
 ## Components
 
@@ -91,7 +100,8 @@ DeepEval's `LocalModel`) against a hand-written golden dataset.
 - **Vector store:** Pinecone
 - **Reranking:** `sentence-transformers` (CrossEncoder)
 - **LLM inference:** Groq (OpenAI-compatible endpoint). `openai/gpt-oss-20b` for generation,
-  `openai/gpt-oss-120b` as the eval judge.
+  `openai/gpt-oss-120b` as the judge for the retrieval/generation/pipeline evals, `gpt-4o-mini`
+  (OpenAI, via DeepEval's built-in `GEval`) as the judge for the application-level eval.
 - **Evaluation framework:** DeepEval
 - **Tooling:** `uv` for dependency and environment management
 
@@ -106,6 +116,7 @@ Create a `.env` file with:
 ```
 PINECONE_API_KEY=...
 GROQ_API_KEY=...
+OPENAI_API_KEY=...   # only needed for evals/eval_application.py (GEval judge = gpt-4o-mini)
 ```
 
 Run the pipeline directly:
@@ -121,6 +132,7 @@ PYTHONUTF8=1 PYTHONIOENCODING=utf-8 uv run python -m evals.eval_retriever
 PYTHONUTF8=1 PYTHONIOENCODING=utf-8 uv run python -m evals.eval_reranker
 PYTHONUTF8=1 PYTHONIOENCODING=utf-8 uv run python -m evals.eval_generator
 PYTHONUTF8=1 PYTHONIOENCODING=utf-8 uv run python -m evals.eval_pipeline
+PYTHONUTF8=1 PYTHONIOENCODING=utf-8 uv run python -m evals.eval_application
 ```
 
 ## Engineering notes
@@ -142,13 +154,21 @@ A few non-obvious decisions worth explaining:
   project. The generator was migrated to `openai/gpt-oss-20b` after checking the currently
   available models directly through the Groq SDK's `models.list()`, instead of guessing from
   docs that may be out of date.
+- **Reference-based grading for the application eval.** Unlike the other evals, which check
+  faithfulness/relevancy with no "correct answer" to compare against, `eval_application.py` grades
+  against a golden `ideal_answer` per question. That needed three separate, narrowly-scoped
+  `GEval` rubrics (Correctness, Completeness, Style) so an answer that's short-but-accurate isn't
+  docked for incompleteness, and vice versa — a single blended metric would conflate those failure
+  modes.
 
 ## Roadmap
 
 - [x] Retriever eval (Contextual Precision / Recall)
 - [x] Reranker eval (Contextual Precision / Recall, after reranking)
 - [x] Generator eval (Faithfulness / Answer Relevancy)
-- [ ] Full pipeline eval: wire `eval_pipeline.py` to the pipeline's actual retrieved context and
-      answer (in progress)
+- [x] Full pipeline eval (Faithfulness / Answer Relevancy / Contextual Relevancy on the pipeline's
+      actual retrieved context and answer)
+- [x] Application-level eval against golden ideal answers (Correctness / Completeness / Style via
+      `GEval`)
 - [ ] Migrate `eval_retriever.py`'s judge model off the retired `llama-3.1-8b-instant`
 - [ ] CI-driven eval runs on pull requests, gated on metric thresholds

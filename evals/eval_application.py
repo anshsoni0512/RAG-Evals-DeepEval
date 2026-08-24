@@ -7,7 +7,7 @@ from deepeval.metrics import GEval
 from deepeval import evaluate
 from src.pipeline import rag
 
-GOLDEN_PATH = 'goldendata/correctness_data'
+GOLDEN_PATH = 'goldendata/correctness_data.json'
 JUDGE_MODEL = 'gpt-4o-mini'
 THRESHOLD = 0.7
 
@@ -21,7 +21,7 @@ for i in data:
     test_cases.append(LLMTestCase(
         input = i['question'],
         expected_output= i['ideal_answer'],
-        acutal_output = result['answer']
+        actual_output = result['answer']
     ))
 
 correctness = GEval(
